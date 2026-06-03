@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playce — Антикафе в Алматы</title>
+  <meta name="description" content="Уютные зоны, атмосферные мероприятия, оплата по времени — твое место для встреч и событий в Алматы.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="logo">Play<span>ce</span></a>
+      <ul class="nav-links">
+        <li><a href="#spaces">Пространства</a></li>
+        <li><a href="#afisha">Афиша</a></li>
+        <li><a href="#gallery">Фото</a></li>
+        <li><a href="#booking">Бронь</a></li>
+        <li><a href="#contacts">Контакты</a></li>
+      </ul>
+      <button class="nav-cta" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Забронировать</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">✦ Антикафе в Алматы</div>
+      <h1>Твоё место<br>для <span>встреч и событий</span></h1>
+      <p>Уютные зоны, атмосферные мероприятия, оплата по времени — просто приходи и кайфуй</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="document.getElementById('booking').scrollIntoView({behavior:'smooth'})">Забронировать место</button>
+        <button class="btn-outline" onclick="document.getElementById('spaces').scrollIntoView({behavior:'smooth'})">Посмотреть пространства</button>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><strong>14:00 – 02:00</strong><span>Ежедневно</span></div>
+        <div class="hero-meta-item"><strong>пр. Абая, 139</strong><span>Алматы</span></div>
+        <div class="hero-meta-item"><strong>5.0 ★</strong><span>Рейтинг 2GIS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPACES -->
+  <section class="spaces" id="spaces">
+    <div class="container">
+      <p class="section-label">Каталог</p>
+      <h2 class="section-title">Наши пространства</h2>
+      <p class="section-sub">Выбери зону под своё настроение и формат встречи</p>
+      
+      <div class="spaces-grid">
+        <!-- Rendered dynamically from JS -->
+        <div style="text-align: center; grid-column: 1/-1; color: var(--muted); padding: 40px;">Загрузка пространств...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AFISHA -->
+  <section class="afisha" id="afisha">
+    <div class="container">
+      <p class="section-label">События</p>
+      <h2 class="section-title">Афиша мероприятий</h2>
+      <p class="section-sub">Актуальные события и ближайшие вечеринки в Playce</p>
+      
+      <div class="afisha-slider">
+        <!-- Rendered dynamically from JS -->
+        <div style="text-align: center; grid-column: 1/-1; color: var(--muted); padding: 40px;">Загрузка афиши...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section class="gallery" id="gallery">
+    <div class="container">
+      <p class="section-label">Фотогалерея</p>
+      <h2 class="section-title">Моменты в Playce</h2>
+      <p class="section-sub">Атмосфера наших мероприятий и повседневная жизнь пространства</p>
+      
+      <div class="gallery-grid">
+        <!-- Rendered dynamically from JS -->
+      </div>
+      
+      <p style="font-size:13px;color:var(--muted);margin-top:24px;text-align:center">Больше фото: <a href="https://instagram.com/anticafe_playce" target="_blank" style="color:var(--accent)">@anticafe_playce</a></p>
+    </div>
+  </section>
+
+  <!-- BOOKING -->
+  <section class="booking" id="booking">
+    <div class="booking-inner">
+      <div id="booking-form">
+        <p class="section-label" style="margin-bottom:6px">Онлайн-бронирование</p>
+        <h2 class="section-title">Забронировать место</h2>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:28px">Заполни форму — мы свяжемся для подтверждения</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-name">Имя *</label>
+            <input type="text" id="f-name" placeholder="Айгерим" required>
+          </div>
+          <div class="form-group">
+            <label for="f-phone">Телефон *</label>
+            <input type="tel" id="f-phone" placeholder="+7 700 000 0000" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-date">Дата *</label>
+            <input type="date" id="f-date" required>
+          </div>
+          <div class="form-group">
+            <label for="f-time">Время *</label>
+            <input type="time" id="f-time" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-type">Тип мероприятия *</label>
+            <select id="f-type" required>
+              <option value="">— Выбрать —</option>
+              <option>День рождения</option>
+              <option>Корпоратив</option>
+              <option>Вечеринка с друзьями</option>
+              <option>Кино-вечер</option>
+              <option>Рабочая встреча</option>
+              <option>Мастер-класс</option>
+              <option>Другое</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-guests">Количество гостей *</label>
+            <input type="number" id="f-guests" placeholder="6" min="1" max="50" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f-space">Зона / Пространство</label>
+          <select id="f-space">
+            <option value="">— Выбрать —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-comment">Комментарий</label>
+          <textarea id="f-comment" placeholder="Особые пожелания, декор, угощения..."></textarea>
+        </div>
+        <button class="form-submit" onclick="submitBooking()">Отправить заявку →</button>
+        <p class="form-note">Мы ответим в течение 30 минут в рабочее время</p>
+      </div>
+      <div class="success-msg" id="success-msg">
+        <div style="font-size:48px;margin-bottom:16px">✅</div>
+        <h3>Заявка отправлена!</h3>
+        <p>Мы получили твою бронь и скоро свяжемся для подтверждения.<br>Ждём тебя в Playce 🎉</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTS -->
+  <section class="contacts" id="contacts">
+    <div class="container">
+      <p class="section-label">Контакты</p>
+      <h2 class="section-title">Как нас найти</h2>
+      <div class="contacts-grid">
+        <div>
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <div><h4>Адрес</h4><p>пр. Абая, 139, Алматы<br>Алмалинский район</p></div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">🕐</div>
+            <div><h4>Режим работы</h4><p>Ежедневно: 14:00 – 02:00</p></div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📞</div>
+            <div>
+              <h4>Телефон / WhatsApp</h4>
+              <p><a href="tel:+77066367707" style="color:var(--accent)">+7 706 636 7707</a></p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📱</div>
+            <div>
+              <h4>Соцсети</h4>
+              <div class="social-links">
+                <a class="social-btn" href="https://instagram.com/anticafe_playce" target="_blank">Instagram</a>
+                <a class="social-btn" href="https://wa.me/77066367707" target="_blank">WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="map-placeholder">
+          <!-- 2GIS / Yandex Map Iframe for Abay 139 Almaty -->
+          <iframe src="https://yandex.ru/map-widget/v1/?ll=76.899201%2C43.226815&mode=search&oid=194380649714&ol=biz&z=16" width="100%" height="100%" frameborder="0" allowfullscreen="true" style="position:relative; filter: invert(90%) hue-rotate(180deg) contrast(1.2);"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p><span class="brand">Playce</span> — антикафе в Алматы · пр. Абая, 139 · © 2026</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

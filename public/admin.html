@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель управления — Playce</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <a href="/admin" class="admin-logo">Play<span>ce</span> · Admin</a>
+      <div class="header-links">
+        <a href="/" class="btn-site" target="_blank">Открыть сайт ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="admin-container">
+    
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <button class="tab-btn active" onclick="switchTab('hero')">✦ Главный баннер</button>
+      <button class="tab-btn" onclick="switchTab('spaces')">🏠 Пространства (6)</button>
+      <button class="tab-btn" onclick="switchTab('afisha')">📅 Афиша событий</button>
+      <button class="tab-btn" onclick="switchTab('gallery')">🖼️ Фотогалерея</button>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="admin-content">
+      
+      <!-- HERO TAB -->
+      <section id="panel-hero" class="tab-panel active">
+        <div class="panel-header">
+          <h2>Главный баннер и информация</h2>
+          <p>Настройки главного экрана сайта, фонового баннера и контактной информации.</p>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-title">🏞️ Фоновый баннер Hero</div>
+          <div class="form-group">
+            <label>Загрузить новую фоновую картинку баннера</label>
+            <div class="upload-zone">
+              <span class="upload-icon">📤</span>
+              <span class="upload-text">Нажмите или перетащите файл для загрузки (JPG, PNG, WebP)</span>
+              <input type="file" id="hero-upload" accept="image/*" onchange="uploadBanner('hero')">
+            </div>
+            <div class="preview-container">
+              <div class="img-preview" id="hero-preview">🖼️</div>
+              <div class="upload-text">
+                <strong>Текущий баннер</strong>
+                <p id="hero-preview-status">Не загружен (используется стандартный градиент)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form id="hero-form" onsubmit="saveHero(event)">
+          <div class="admin-card">
+            <div class="card-title">📝 Тексты на главном экране</div>
+            <div class="form-group">
+              <label for="hero-title">Заголовок (можно использовать &lt;span&gt; для подсветки)</label>
+              <input type="text" id="hero-title" required>
+            </div>
+            <div class="form-group">
+              <label for="hero-subtitle">Подзаголовок (Badge)</label>
+              <input type="text" id="hero-subtitle" required>
+            </div>
+            <div class="form-group">
+              <label for="hero-desc">Описание</label>
+              <textarea id="hero-desc" required></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="hero-hours">Режим работы</label>
+                <input type="text" id="hero-hours" required>
+              </div>
+              <div class="form-group">
+                <label for="hero-address">Адрес</label>
+                <input type="text" id="hero-address" required>
+              </div>
+              <div class="form-group">
+                <label for="hero-rating">Рейтинг</label>
+                <input type="text" id="hero-rating" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-save">Сохранить изменения</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- SPACES TAB -->
+      <section id="panel-spaces" class="tab-panel">
+        <div class="panel-header">
+          <h2>Наши пространства</h2>
+          <p>Редактируйте информацию о зонах антикафе и загружайте фотографии (баннеры) для каждой зоны.</p>
+        </div>
+
+        <div id="spaces-list">
+          <!-- Rendered dynamically from JS -->
+          <div style="color: var(--muted); text-align: center; padding: 40px;">Загрузка зон...</div>
+        </div>
+      </section>
+
+      <!-- AFISHA TAB -->
+      <section id="panel-afisha" class="tab-panel">
+        <div class="panel-header">
+          <h2>Афиша мероприятий</h2>
+          <p>Управление карточками предстоящих событий на главной странице.</p>
+        </div>
+
+        <form id="afisha-form" onsubmit="saveAfisha(event)">
+          <div id="afisha-list">
+            <!-- Rendered dynamically from JS -->
+            <div style="color: var(--muted); text-align: center; padding: 40px;">Загрузка событий...</div>
+          </div>
+          <div style="margin-top: 20px;">
+            <button type="submit" class="btn-save">Сохранить афишу</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- GALLERY TAB -->
+      <section id="panel-gallery" class="tab-panel">
+        <div class="panel-header">
+          <h2>Фотогалерея студии</h2>
+          <p>Загружайте фотографии интерьера, атмосферы и прошедших событий. Они будут отображаться в галерее на сайте.</p>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-title">📤 Загрузить новые фото</div>
+          <div class="upload-zone">
+            <span class="upload-icon">📸</span>
+            <span class="upload-text">Нажмите или перетащите фото для загрузки в галерею (до 10MB)</span>
+            <input type="file" id="gallery-upload" accept="image/*" onchange="uploadGalleryImage()">
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-title">🖼️ Текущие фотографии в галерее</div>
+          <div class="admin-gallery-grid" id="admin-gallery-list">
+            <!-- Rendered dynamically from JS -->
+            <div style="color: var(--muted); text-align: center; grid-column: 1/-1; padding: 40px;">Нет загруженных фотографий</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="admin-toast">Сохранено успешно!</div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
