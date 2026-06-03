@@ -39,7 +39,8 @@ const DEFAULT_DB = {
     bannerUrl: "/images/hero_banner.png", // Default beautiful generated banner
     workingHours: "14:00 – 02:00",
     address: "пр. Абая, 139",
-    rating: "5.0 ★"
+    rating: "5.0 ★",
+    email: "tamarena1991@gmail.com"
   },
   spaces: [
     {

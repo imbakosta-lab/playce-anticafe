@@ -44,6 +44,9 @@ async function loadSiteData() {
 function renderHero(hero) {
   if (!hero) return;
 
+  // Set booking email dynamically
+  window.contactEmail = hero.email || 'tamarena1991@gmail.com';
+
   // Background Banner
   const heroSection = document.querySelector('.hero');
   if (heroSection) {
@@ -249,7 +252,8 @@ function submitBooking() {
 `
   );
 
-  window.location.href = `mailto:playce@example.com?subject=${subject}&body=${body}`;
+  const email = window.contactEmail || 'tamarena1991@gmail.com';
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
 
   document.getElementById('booking-form').style.display = 'none';
   document.getElementById('success-msg').style.display = 'block';

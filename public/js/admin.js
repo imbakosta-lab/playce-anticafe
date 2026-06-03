@@ -67,6 +67,7 @@ function populateHero(hero) {
   document.getElementById('hero-hours').value = hero.workingHours || '';
   document.getElementById('hero-address').value = hero.address || '';
   document.getElementById('hero-rating').value = hero.rating || '';
+  document.getElementById('hero-email').value = hero.email || '';
 
   // Update image preview
   const preview = document.getElementById('hero-preview');
@@ -124,7 +125,8 @@ async function saveHero(e) {
     description: document.getElementById('hero-desc').value.trim(),
     workingHours: document.getElementById('hero-hours').value.trim(),
     address: document.getElementById('hero-address').value.trim(),
-    rating: document.getElementById('hero-rating').value.trim()
+    rating: document.getElementById('hero-rating').value.trim(),
+    email: document.getElementById('hero-email').value.trim()
   };
 
   try {
