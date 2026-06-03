@@ -27,6 +27,7 @@
       <button class="tab-btn" onclick="switchTab('spaces')">🏠 Пространства (6)</button>
       <button class="tab-btn" onclick="switchTab('afisha')">📅 Афиша событий</button>
       <button class="tab-btn" onclick="switchTab('gallery')">🖼️ Фотогалерея</button>
+      <button class="tab-btn" onclick="switchTab('smtp')">✉️ Настройка почты (SMTP)</button>
     </aside>
 
     <!-- CONTENT -->
@@ -150,6 +151,62 @@
             <div style="color: var(--muted); text-align: center; grid-column: 1/-1; padding: 40px;">Нет загруженных фотографий</div>
           </div>
         </div>
+      </section>
+
+      <!-- SMTP TAB -->
+      <section id="panel-smtp" class="tab-panel">
+        <div class="panel-header">
+          <h2>Настройка уведомлений по почте (SMTP)</h2>
+          <p>Настройте почтовый ящик, с которого сайт будет автоматически отправлять уведомления о бронированиях на вашу рабочую почту.</p>
+        </div>
+
+        <form id="smtp-form" onsubmit="saveSmtp(event)">
+          <div class="admin-card">
+            <div class="card-title">🔌 Настройки SMTP-сервера</div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight: 600; font-size: 14px; color:#fff;">
+                <input type="checkbox" id="smtp-enabled" style="width:18px; height:18px; cursor:pointer;"> Включить автоматическую отправку уведомлений по почте
+              </label>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="smtp-host">SMTP Хост (сервер)</label>
+                <input type="text" id="smtp-host" placeholder="smtp.gmail.com" required>
+              </div>
+              <div class="form-group">
+                <label for="smtp-port">SMTP Порт</label>
+                <input type="number" id="smtp-port" placeholder="465" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="smtp-user">Логин (Email отправителя)</label>
+                <input type="text" id="smtp-user" placeholder="your-email@gmail.com" required>
+              </div>
+              <div class="form-group">
+                <label for="smtp-pass">Пароль (или пароль приложения)</label>
+                <input type="password" id="smtp-pass" placeholder="••••••••••••••••" required style="width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; outline:none;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="smtp-from">Заголовок Отправителя (Имя и Email)</label>
+              <input type="text" id="smtp-from" placeholder="Playce Anticafe &lt;your-email@gmail.com&gt;" required>
+            </div>
+
+            <div style="background: rgba(167, 139, 250, 0.05); border: 1px solid rgba(167, 139, 250, 0.15); border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: var(--muted); line-height: 1.5;">
+              <strong>💡 Инструкция по настройке для Gmail:</strong><br>
+              1. В вашем Google-аккаунте должна быть включена «Двухэтапная аутентификация».<br>
+              2. Перейдите в раздел безопасности аккаунта и создайте <strong>«Пароль приложения»</strong> (App Password).<br>
+              3. Используйте хост <code>smtp.gmail.com</code>, порт <code>465</code>, ваш логин Gmail и полученный 16-значный пароль приложения.
+            </div>
+
+            <button type="submit" class="btn-save">Сохранить настройки почты</button>
+          </div>
+        </form>
       </section>
 
     </main>

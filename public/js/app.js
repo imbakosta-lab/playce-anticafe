@@ -220,7 +220,7 @@ function setupLightbox() {
 }
 
 // Submit Booking Form
-function submitBooking() {
+async function submitBooking() {
   const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const date = document.getElementById('f-date').value;
@@ -235,26 +235,29 @@ function submitBooking() {
     return;
   }
 
-  const fmtDate = new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const submitBtn = document.querySelector('.form-submit');
+  const originalBtnText = submitBtn.textContent;
+  submitBtn.textContent = 'Отправка...';
+  submitBtn.disabled = true;
 
-  const subject = encodeURIComponent(`Новая бронь Playce — ${name} — ${fmtDate}`);
-  const body = encodeURIComponent(
-`📅 НОВАЯ ЗАЯВКА НА БРОНИРОВАНИЕ — PLAYCE
+  try {
+    const response = await fetch('/api/booking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, phone, date, time, type, guests, space, comment })
+    });
 
-👤 Имя: ${name}
-📞 Телефон: ${phone}
-📅 Дата: ${fmtDate}
-🕐 Время: ${time}
-🎉 Тип мероприятия: ${type}
-👥 Гостей: ${guests}
-🏠 Зона: ${space || 'не указана'}
-📝 Комментарий: ${comment || '—'}
-`
-  );
+    if (!response.ok) throw new Error('Booking failed');
 
-  const email = window.contactEmail || 'tamarena1991@gmail.com';
-  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('success-msg').style.display = 'block';
+    document.getElementById('booking-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  } catch (error) {
+    console.error('Error submitting booking:', error);
+    alert('Произошла ошибка при отправке заявки. Пожалуйста, отправьте ее повторно или свяжитесь с нами по телефону.');
+  } finally {
+    submitBtn.textContent = originalBtnText;
+    submitBtn.disabled = false;
+  }
 }

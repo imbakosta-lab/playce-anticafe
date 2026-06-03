@@ -36,6 +36,7 @@ async function loadAdminData() {
     populateSpaces(localData.spaces);
     populateAfisha(localData.afisha);
     populateGallery(localData.gallery);
+    populateSmtp(localData.smtp);
   } catch (err) {
     console.error(err);
     showToast('Ошибка загрузки данных сайта', true);
@@ -410,5 +411,49 @@ async function deleteGalleryImage(imageUrl) {
   } catch (err) {
     console.error(err);
     showToast('Не удалось удалить фото', true);
+  }
+}
+
+/* ==========================================================================
+   SMTP SECTION
+   ========================================================================== */
+
+function populateSmtp(smtp) {
+  if (!smtp) return;
+  document.getElementById('smtp-enabled').checked = smtp.enabled || false;
+  document.getElementById('smtp-host').value = smtp.host || '';
+  document.getElementById('smtp-port').value = smtp.port || '';
+  document.getElementById('smtp-user').value = smtp.user || '';
+  document.getElementById('smtp-pass').value = smtp.pass || '';
+  document.getElementById('smtp-from').value = smtp.from || '';
+}
+
+async function saveSmtp(e) {
+  e.preventDefault();
+
+  const smtpData = {
+    enabled: document.getElementById('smtp-enabled').checked,
+    host: document.getElementById('smtp-host').value.trim(),
+    port: parseInt(document.getElementById('smtp-port').value),
+    secure: parseInt(document.getElementById('smtp-port').value) === 465,
+    user: document.getElementById('smtp-user').value.trim(),
+    pass: document.getElementById('smtp-pass').value.trim(),
+    from: document.getElementById('smtp-from').value.trim()
+  };
+
+  try {
+    const response = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smtp: smtpData })
+    });
+
+    if (!response.ok) throw new Error('Save SMTP failed');
+    const result = await response.json();
+    localData = result.data;
+    showToast('Настройки почты успешно сохранены!');
+  } catch (err) {
+    console.error(err);
+    showToast('Не удалось сохранить настройки почты', true);
   }
 }

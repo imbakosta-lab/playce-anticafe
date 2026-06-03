@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -138,7 +139,16 @@ const DEFAULT_DB = {
       badgeClass: "badge-new"
     }
   ],
-  gallery: []
+  gallery: [],
+  smtp: {
+    enabled: false,
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    user: "",
+    pass: "",
+    from: "Playce Anticafe <your-email@gmail.com>"
+  }
 };
 
 // Load or create DB
@@ -149,7 +159,13 @@ function loadDb() {
   }
   try {
     const data = fs.readFileSync(DB_PATH, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    // Ensure smtp structure exists in older database files
+    if (!parsed.smtp) {
+      parsed.smtp = DEFAULT_DB.smtp;
+      saveDb(parsed);
+    }
+    return parsed;
   } catch (err) {
     console.error("Error reading database file, using defaults:", err);
     return DEFAULT_DB;
@@ -203,9 +219,111 @@ app.post('/api/save', (req, res) => {
   if (updatedData.spaces) currentDb.spaces = updatedData.spaces;
   if (updatedData.afisha) currentDb.afisha = updatedData.afisha;
   if (updatedData.gallery) currentDb.gallery = updatedData.gallery;
+  if (updatedData.smtp) currentDb.smtp = { ...currentDb.smtp, ...updatedData.smtp };
 
   saveDb(currentDb);
   res.json({ success: true, data: currentDb });
+});
+
+// Submit booking form & send email via Nodemailer
+app.post('/api/booking', async (req, res) => {
+  const { name, phone, date, time, type, guests, space, comment } = req.body;
+  
+  if (!name || !phone || !date || !time || !type || !guests) {
+    return res.status(400).json({ error: 'Пожалуйста, заполните все обязательные поля' });
+  }
+
+  const db = loadDb();
+  const targetEmail = db.hero.email || 'tamarena1991@gmail.com';
+  const formattedDate = new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Console log as fallback
+  console.log(`\n========================================`);
+  console.log(`📅 НОВАЯ ЗАЯВКА НА БРОНИРОВАНИЕ — PLAYCE`);
+  console.log(`👤 Клиент: ${name}`);
+  console.log(`📞 Телефон: ${phone}`);
+  console.log(`📅 Дата: ${formattedDate} в ${time}`);
+  console.log(`🎉 Событие: ${type} (${guests} чел.)`);
+  console.log(`🏠 Пространство: ${space || 'не указано'}`);
+  console.log(`📝 Комментарий: ${comment || '—'}`);
+  console.log(`========================================\n`);
+
+  // HTML Email Body
+  const emailHtml = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f0f1a; color: #f1f0ff; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; border: 1px solid #24243b;">
+      <h2 style="color: #a78bfa; border-bottom: 2px solid #7c3aed; padding-bottom: 12px; margin-top: 0; font-size: 22px;">
+        📅 Новая бронь в Playce
+      </h2>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 15px;">
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold; width: 160px;">👤 Имя клиента:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">📞 Телефон:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;"><a href="tel:${phone}" style="color: #a78bfa; text-decoration: none;">${phone}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">📅 Дата:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${formattedDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">🕐 Время:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${time}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">🎉 Мероприятие:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${type}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">👥 Гостей:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${guests} чел.</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold;">🏠 Зона / Зал:</td>
+          <td style="padding: 10px 0; color: #f1f0ff;">${space || 'не указана'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9490b0; font-weight: bold; vertical-align: top;">📝 Комментарий:</td>
+          <td style="padding: 10px 0; color: #f1f0ff; line-height: 1.5;">${comment || '—'}</td>
+        </tr>
+      </table>
+      <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #24243b; text-align: center; font-size: 12px; color: #9490b0;">
+        Это автоматическое уведомление от сайта Playce Anticafe.
+      </div>
+    </div>
+  `;
+
+  // Check if SMTP is configured and enabled
+  if (db.smtp && db.smtp.enabled && db.smtp.user && db.smtp.pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: db.smtp.host,
+        port: parseInt(db.smtp.port),
+        secure: db.smtp.secure, // true for 465, false for other ports
+        auth: {
+          user: db.smtp.user,
+          pass: db.smtp.pass
+        }
+      });
+
+      await transporter.sendMail({
+        from: db.smtp.from || db.smtp.user,
+        to: targetEmail,
+        subject: `🔔 Новая бронь: ${name} (${formattedDate} в ${time})`,
+        html: emailHtml
+      });
+
+      return res.json({ success: true, method: 'smtp' });
+    } catch (emailErr) {
+      console.error("Nodemailer failed to send email, falling back to log:", emailErr.message);
+      // Return success but warning in server log
+      return res.json({ success: true, method: 'log', error: emailErr.message });
+    }
+  }
+
+  // If SMTP is disabled/not configured, return success (logged locally)
+  res.json({ success: true, method: 'log', warning: 'SMTP is not configured. Config it in Admin panel to receive email alerts.' });
 });
 
 // Upload endpoint for specific banner
