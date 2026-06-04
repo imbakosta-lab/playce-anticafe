@@ -509,10 +509,24 @@ function renderBookings(bookings) {
       ? `<div class="booking-comment"><strong>Комментарий:</strong> ${b.comment}</div>`
       : '';
 
+    let statusBadge = '';
+    if (b.emailStatus) {
+      if (b.emailStatus.success) {
+        statusBadge = `<span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: var(--success); font-weight: 500; margin-left: 8px;">✉️ Отправлено (${b.emailStatus.method})</span>`;
+      } else {
+        statusBadge = `<span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: var(--danger); font-weight: 500; margin-left: 8px;" title="${b.emailStatus.error || 'Ошибка доставки'}">⚠️ Сбой почты (${b.emailStatus.method}): ${b.emailStatus.error || 'unknown'}</span>`;
+      }
+    } else {
+      statusBadge = `<span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--muted); font-weight: 500; margin-left: 8px;">⏳ Статус отправки неизвестен</span>`;
+    }
+
     return `
       <div class="booking-card" data-booking-id="${b.id}">
         <div class="booking-card-header">
-          <h3>👤 ${b.name}</h3>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <h3>👤 ${b.name}</h3>
+            ${statusBadge}
+          </div>
           <span class="booking-date-badge">📅 ${bookingDate} в ${b.time}</span>
         </div>
         <div class="booking-grid">

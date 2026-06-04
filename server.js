@@ -182,6 +182,7 @@ function saveDb(data) {
 }
 
 function saveBookingLocally(booking) {
+  const id = 'booking-' + Date.now() + '-' + Math.round(Math.random() * 1000);
   try {
     let bookings = [];
     if (fs.existsSync(BOOKINGS_PATH)) {
@@ -196,7 +197,7 @@ function saveBookingLocally(booking) {
       }
     }
     bookings.push({
-      id: 'booking-' + Date.now() + '-' + Math.round(Math.random() * 1000),
+      id,
       createdAt: new Date().toISOString(),
       ...booking
     });
@@ -205,7 +206,26 @@ function saveBookingLocally(booking) {
   } catch (err) {
     console.error("Error saving booking locally:", err);
   }
+  return id;
 }
+
+function updateBookingStatus(id, emailStatus) {
+  try {
+    if (fs.existsSync(BOOKINGS_PATH)) {
+      const data = fs.readFileSync(BOOKINGS_PATH, 'utf8');
+      let bookings = JSON.parse(data);
+      const index = bookings.findIndex(b => b.id === id);
+      if (index !== -1) {
+        bookings[index].emailStatus = emailStatus;
+        fs.writeFileSync(BOOKINGS_PATH, JSON.stringify(bookings, null, 2), 'utf8');
+        console.log(`Booking status updated locally:`, emailStatus);
+      }
+    }
+  } catch (err) {
+    console.error("Error updating booking status:", err);
+  }
+}
+
 
 async function fetchWithTimeout(url, options, timeout = 4000) {
   if (typeof fetch === 'undefined') {
@@ -327,7 +347,7 @@ app.post('/api/booking', async (req, res) => {
   }
 
   // Save booking locally to db so it is never lost even if SMTP/FormSubmit fails or hangs
-  saveBookingLocally({ name, phone, date, time, type, guests, space, comment });
+  const bookingId = saveBookingLocally({ name, phone, date, time, type, guests, space, comment });
 
   const db = loadDb();
   const targetEmail = db.hero.email || 'tamarena1991@gmail.com';
@@ -413,10 +433,11 @@ app.post('/api/booking', async (req, res) => {
         html: emailHtml
       });
 
+      updateBookingStatus(bookingId, { success: true, method: 'smtp' });
       return res.json({ success: true, method: 'smtp' });
     } catch (emailErr) {
       console.error("Nodemailer failed to send email, falling back to log:", emailErr.message);
-      // Return success but warning in server log
+      updateBookingStatus(bookingId, { success: false, method: 'smtp', error: emailErr.message });
       return res.json({ success: true, method: 'log', error: emailErr.message });
     }
   }
@@ -454,9 +475,17 @@ app.post('/api/booking', async (req, res) => {
 
     const result = await response.json();
     console.log('FormSubmit status:', result);
+    
+    if (result && (result.success === 'true' || result.success === true)) {
+      updateBookingStatus(bookingId, { success: true, method: 'formsubmit' });
+    } else {
+      updateBookingStatus(bookingId, { success: false, method: 'formsubmit', error: result ? result.message : 'Unknown error' });
+    }
+
     return res.json({ success: true, method: 'formsubmit' });
   } catch (fsErr) {
     console.error("FormSubmit API fallback failed:", fsErr.message);
+    updateBookingStatus(bookingId, { success: false, method: 'formsubmit', error: fsErr.message });
     res.json({ success: true, method: 'log', warning: 'Email delivery failed. Saved in local logs.' });
   }
 });
