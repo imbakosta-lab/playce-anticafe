@@ -4,7 +4,9 @@ let localData = null; // Local copy of database
 
 document.addEventListener('DOMContentLoaded', () => {
   loadAdminData();
+  loadBookings();
 });
+
 
 // Switch active panel tab
 function switchTab(tabId) {
@@ -457,3 +459,98 @@ async function saveSmtp(e) {
     showToast('Не удалось сохранить настройки почты', true);
   }
 }
+
+// Fetch and render bookings
+async function loadBookings() {
+  const container = document.getElementById('bookings-list');
+  if (!container) return;
+
+  try {
+    const response = await fetch('/api/bookings');
+    if (!response.ok) throw new Error('Could not fetch bookings');
+    const bookings = await response.json();
+    
+    renderBookings(bookings);
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div style="color: var(--danger); text-align: center; padding: 40px;">Ошибка загрузки заявок: ${err.message}</div>`;
+  }
+}
+
+// Render bookings list
+function renderBookings(bookings) {
+  const container = document.getElementById('bookings-list');
+  if (!container) return;
+
+  if (!bookings || bookings.length === 0) {
+    container.innerHTML = `<div style="color: var(--muted); text-align: center; padding: 40px;">Пока нет ни одной заявки на бронирование.</div>`;
+    return;
+  }
+
+  // Sort bookings so newest are first
+  const sortedBookings = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  container.innerHTML = sortedBookings.map(b => {
+    const createdDate = new Date(b.createdAt).toLocaleString('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const bookingDate = new Date(b.date).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    const commentHtml = b.comment 
+      ? `<div class="booking-comment"><strong>Комментарий:</strong> ${b.comment}</div>`
+      : '';
+
+    return `
+      <div class="booking-card" data-booking-id="${b.id}">
+        <div class="booking-card-header">
+          <h3>👤 ${b.name}</h3>
+          <span class="booking-date-badge">📅 ${bookingDate} в ${b.time}</span>
+        </div>
+        <div class="booking-grid">
+          <div class="booking-meta-item">📞 Телефон: <a href="tel:${b.phone}" style="color:var(--accent); text-decoration:none; font-weight:600;">${b.phone}</a></div>
+          <div class="booking-meta-item">🎉 Событие: <strong>${b.type}</strong></div>
+          <div class="booking-meta-item">👥 Гостей: <strong>${b.guests} чел.</strong></div>
+          <div class="booking-meta-item">🏠 Зона / Зал: <strong>${b.space || 'не указано'}</strong></div>
+        </div>
+        ${commentHtml}
+        <div class="booking-card-footer">
+          <span>Получено: ${createdDate}</span>
+          <button type="button" class="btn-danger-outline" onclick="deleteBooking('${b.id}')">Удалить заявку 🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Delete booking
+async function deleteBooking(id) {
+  if (!confirm('Вы действительно хотите удалить эту заявку?')) return;
+
+  try {
+    const response = await fetch('/api/delete-booking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+
+    if (!response.ok) throw new Error('Deletion failed');
+    const result = await response.json();
+    
+    // Re-render
+    renderBookings(result.bookings);
+    showToast('Заявка успешно удалена');
+  } catch (err) {
+    console.error(err);
+    showToast('Не удалось удалить заявку', true);
+  }
+}
+

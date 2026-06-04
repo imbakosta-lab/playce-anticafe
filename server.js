@@ -30,6 +30,7 @@ DIRS.forEach(dir => {
 });
 
 const DB_PATH = path.join(DB_DIR, 'db.json');
+const BOOKINGS_PATH = path.join(DB_DIR, 'bookings.json');
 
 // Default initial database content
 const DEFAULT_DB = {
@@ -180,6 +181,51 @@ function saveDb(data) {
   }
 }
 
+function saveBookingLocally(booking) {
+  try {
+    let bookings = [];
+    if (fs.existsSync(BOOKINGS_PATH)) {
+      const data = fs.readFileSync(BOOKINGS_PATH, 'utf8');
+      try {
+        bookings = JSON.parse(data);
+        if (!Array.isArray(bookings)) {
+          bookings = [];
+        }
+      } catch (e) {
+        bookings = [];
+      }
+    }
+    bookings.push({
+      id: 'booking-' + Date.now() + '-' + Math.round(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      ...booking
+    });
+    fs.writeFileSync(BOOKINGS_PATH, JSON.stringify(bookings, null, 2), 'utf8');
+    console.log(`Booking saved locally to bookings.json`);
+  } catch (err) {
+    console.error("Error saving booking locally:", err);
+  }
+}
+
+async function fetchWithTimeout(url, options, timeout = 4000) {
+  if (typeof fetch === 'undefined') {
+    throw new Error('fetch is not defined in this Node.js environment');
+  }
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
 // Multer storage setup pointing to custom uploads directory
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -225,6 +271,53 @@ app.post('/api/save', (req, res) => {
   res.json({ success: true, data: currentDb });
 });
 
+// Get all bookings
+app.get('/api/bookings', (req, res) => {
+  try {
+    let bookings = [];
+    if (fs.existsSync(BOOKINGS_PATH)) {
+      const data = fs.readFileSync(BOOKINGS_PATH, 'utf8');
+      try {
+        bookings = JSON.parse(data);
+        if (!Array.isArray(bookings)) {
+          bookings = [];
+        }
+      } catch (e) {
+        bookings = [];
+      }
+    }
+    res.json(bookings);
+  } catch (err) {
+    console.error("Error reading bookings file:", err);
+    res.status(500).json({ error: "Failed to read bookings" });
+  }
+});
+
+// Delete a booking
+app.post('/api/delete-booking', (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'Booking ID required' });
+  }
+  try {
+    if (fs.existsSync(BOOKINGS_PATH)) {
+      const data = fs.readFileSync(BOOKINGS_PATH, 'utf8');
+      let bookings = JSON.parse(data);
+      const index = bookings.findIndex(b => b.id === id);
+      if (index !== -1) {
+        bookings.splice(index, 1);
+        fs.writeFileSync(BOOKINGS_PATH, JSON.stringify(bookings, null, 2), 'utf8');
+        return res.json({ success: true, bookings });
+      }
+    }
+    res.status(404).json({ error: 'Booking not found' });
+  } catch (err) {
+    console.error("Error deleting booking:", err);
+    res.status(500).json({ error: "Failed to delete booking" });
+  }
+});
+
+
 // Submit booking form & send email via Nodemailer
 app.post('/api/booking', async (req, res) => {
   const { name, phone, date, time, type, guests, space, comment } = req.body;
@@ -232,6 +325,9 @@ app.post('/api/booking', async (req, res) => {
   if (!name || !phone || !date || !time || !type || !guests) {
     return res.status(400).json({ error: 'Пожалуйста, заполните все обязательные поля' });
   }
+
+  // Save booking locally to db so it is never lost even if SMTP/FormSubmit fails or hangs
+  saveBookingLocally({ name, phone, date, time, type, guests, space, comment });
 
   const db = loadDb();
   const targetEmail = db.hero.email || 'tamarena1991@gmail.com';
@@ -304,7 +400,10 @@ app.post('/api/booking', async (req, res) => {
         auth: {
           user: db.smtp.user,
           pass: db.smtp.pass
-        }
+        },
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 4000
       });
 
       await transporter.sendMail({
@@ -326,8 +425,8 @@ app.post('/api/booking', async (req, res) => {
   try {
     console.log(`SMTP not configured. Sending booking notification to ${targetEmail} via FormSubmit...`);
     
-    // We send key-value pairs formatted nicely for FormSubmit
-    const response = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+    // We send key-value pairs formatted nicely for FormSubmit using a timeout
+    const response = await fetchWithTimeout(`https://formsubmit.co/ajax/${targetEmail}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -344,7 +443,7 @@ app.post('/api/booking', async (req, res) => {
         "Пространство / Зал": space || 'не указано',
         "Комментарий": comment || '—'
       })
-    });
+    }, 4000);
 
     const result = await response.json();
     console.log('FormSubmit status:', result);
