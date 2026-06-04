@@ -322,8 +322,37 @@ app.post('/api/booking', async (req, res) => {
     }
   }
 
-  // If SMTP is disabled/not configured, return success (logged locally)
-  res.json({ success: true, method: 'log', warning: 'SMTP is not configured. Config it in Admin panel to receive email alerts.' });
+  // If SMTP is disabled/not configured, automatically fallback to FormSubmit API so emails arrive out-of-the-box!
+  try {
+    console.log(`SMTP not configured. Sending booking notification to ${targetEmail} via FormSubmit...`);
+    
+    // We send key-value pairs formatted nicely for FormSubmit
+    const response = await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        _subject: `🔔 Новая бронь в Playce: ${name}`,
+        "Имя": name,
+        "Телефон": phone,
+        "Дата": formattedDate,
+        "Время": time,
+        "Тип события": type,
+        "Количество гостей": guests,
+        "Пространство / Зал": space || 'не указано',
+        "Комментарий": comment || '—'
+      })
+    });
+
+    const result = await response.json();
+    console.log('FormSubmit status:', result);
+    return res.json({ success: true, method: 'formsubmit' });
+  } catch (fsErr) {
+    console.error("FormSubmit API fallback failed:", fsErr.message);
+    res.json({ success: true, method: 'log', warning: 'Email delivery failed. Saved in local logs.' });
+  }
 });
 
 // Upload endpoint for specific banner
