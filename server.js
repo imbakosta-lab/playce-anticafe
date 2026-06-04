@@ -425,12 +425,19 @@ app.post('/api/booking', async (req, res) => {
   try {
     console.log(`SMTP not configured. Sending booking notification to ${targetEmail} via FormSubmit...`);
     
+    const host = req.get('host') || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const originUrl = `${protocol}://${host}`;
+    const refererUrl = req.headers.referer || `${originUrl}/`;
+
     // We send key-value pairs formatted nicely for FormSubmit using a timeout
     const response = await fetchWithTimeout(`https://formsubmit.co/ajax/${targetEmail}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Referer': refererUrl,
+        'Origin': originUrl
       },
       body: JSON.stringify({
         _subject: `🔔 Новая бронь в Playce: ${name}`,
